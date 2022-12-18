@@ -44,6 +44,8 @@ dir_angle = 0
 gain_angle = 1.0
 gain_vel = 10.0
 
+hit_point_x = 0.5
+hit_point_z = 0.5
 
 def check_win():
     res = 1
@@ -88,9 +90,9 @@ while my_gui.running:
                 velocity_size -= 1.0 * gain_vel
                 velocity_size = max(0.0, velocity_size)
             elif e.key == 'c': #choose position
-                a,b = BP()
-                print('a = ',a)
-                print('b=', b)
+                hit_point_x,hit_point_z = BP() #X:A;  y: b
+                print('hit_point_x = ',hit_point_x)
+                print('hit_point_y=', hit_point_z)
             elif e.key == "1":
                 gain_angle += 10.0
             elif e.key == "2":
@@ -101,7 +103,7 @@ while my_gui.running:
                 gain_vel -= 10.0
             elif e.key == "z":
                 radian = dir_angle * 2 * np.pi / 360
-                table_tennis.hit(velocity_size, np.cos(radian), np.sin(radian))
+                table_tennis.hit(velocity_size, np.cos(radian), np.sin(radian), hit_point_x - 0.5, hit_point_z - 0.5)
                 table_tennis.in_hit = 1
                 table_tennis.first_collision = 0
                 table_tennis.first_hit = 0
