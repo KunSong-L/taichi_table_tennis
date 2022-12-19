@@ -360,7 +360,7 @@ class Table_tennis:  # all ball number = 15+1
                     else:
                         self.ball.vel[i] = new_vel
 
-                    if new_rot.norm() < self.friction_coeff_rotation * delta_t*1.5:
+                    if new_rot.norm() < self.friction_coeff_rotation * delta_t * 1.5:
                         self.ball.rot[i] = ti.Vector([0.0, 0.0, 0.0])
                     else:
                         self.ball.rot[i] = new_rot
@@ -372,16 +372,18 @@ class Table_tennis:  # all ball number = 15+1
         self.collision_balls()
         self.collision_boundary()
 
-    def hit(self, velocity: ti.f32, dir_x: ti.f32, dir_y: ti.f32, hit_point_x, hit_point_z):
+    def hit(
+        self, velocity: ti.f32, dir_x: ti.f32, dir_y: ti.f32, hit_point_x, hit_point_z
+    ):
         dir = ti.Vector([dir_x, dir_y, 0.0])
         dir = dir / dir.norm()
         self.ball.vel[0] = dir * velocity
 
-        omega_k = 5*velocity/2/self.ball.ball_radius/self.ball.ball_radius
-        self.ball.rot[0] = omega_k*ti.Vector([-hit_point_z,0,hit_point_x])
-        rot_mat = ti.Matrix([[dir[1], dir[0], 0],[-dir[0],dir[1],0], [0,0,1]])
-        self.ball.rot[0] = rot_mat @ self.ball.rot[0] 
-        
+        omega_k = 5 * velocity / 2 / self.ball.ball_radius
+        self.ball.rot[0] = omega_k * ti.Vector([-hit_point_z, 0, hit_point_x])
+        rot_mat = ti.Matrix([[dir[1], -dir[0], 0], [dir[0], dir[1], 0], [0, 0, 1]])
+        self.ball.rot[0] = rot_mat @ self.ball.rot[0]
+
     def check_static(self) -> ti.f32:
         res = 0.0
         for i in range(16):
