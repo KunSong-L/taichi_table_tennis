@@ -4,6 +4,7 @@ import taichi as ti
 def BP():
     gui_width = 300
     gui_height = gui_width+100
+    gui_circle_x = 0.5
     gui_circle_y = gui_width/2/gui_height
     gui = ti.GUI('击球点选择', (gui_width, gui_height))
     # = gui.slider('Radius', 1, 50, step=1)
@@ -14,26 +15,58 @@ def BP():
     xcoor.value = 0.5
     ycoor.value = gui_circle_y
     # radius.value = 10
+    move_step = 0.005
+    move_step_0 = 0.005
+    delta_step = 0.001
+    last_key = ''
 
     while gui.running:
         for e in gui.get_events(gui.PRESS):
             if e.key == gui.ESCAPE:
                 gui.running = False
             elif e.key == 'a':
-                if ((xcoor.value - 0.51) ** 2 + (ycoor.value - 0.5) ** 2) < 0.33 ** 2:
-                    xcoor.value -= 0.01
+                if last_key == 'a':
+                    move_step = move_step + delta_step
+                else:
+                    move_step = move_step_0
+
+                if ((xcoor.value -move_step- gui_circle_x) ** 2/gui_circle_x**2 + (ycoor.value - gui_circle_y) ** 2/gui_circle_y**2) < 1:
+                    xcoor.value -= move_step
+                    last_key = 'a'
                 # else:
-                #     xcoor.value +=0.01
+                #     xcoor.value +=move_step
 
             elif e.key == 'd':
-                if ((xcoor.value - 0.49) ** 2 + (ycoor.value - 0.5) ** 2) < 0.33 ** 2:
-                    xcoor.value += 0.01
+                if last_key == 'd':
+                    move_step = move_step + delta_step
+                else:
+                    move_step = move_step_0
+
+                if ((xcoor.value +move_step- gui_circle_x) ** 2/gui_circle_x**2 + (ycoor.value - gui_circle_y) ** 2/gui_circle_y**2) < 1:
+                    xcoor.value += move_step
+                    last_key = 'd'
+
+
             elif e.key == 's':
-                if ((xcoor.value - 0.5) ** 2 + (ycoor.value - 0.51) ** 2) < 0.33 ** 2:
-                    ycoor.value -= 0.01
+                if last_key == 's':
+                    move_step = move_step + delta_step
+                else:
+                    move_step = move_step_0
+
+                if ((xcoor.value - gui_circle_x) ** 2/gui_circle_x**2 + (ycoor.value -move_step- gui_circle_y) ** 2/gui_circle_y**2) < 1:
+                    ycoor.value -= move_step
+                    last_key = 's'
+
             elif e.key == 'w':
-                if ((xcoor.value - 0.5) ** 2 + (ycoor.value - 0.49) ** 2) < 0.33 ** 2:
-                    ycoor.value += 0.01
+                if last_key == 'w':
+                    move_step = move_step + delta_step
+                else:
+                    move_step = move_step_0
+
+                if ((xcoor.value - gui_circle_x) ** 2/gui_circle_x**2 + (ycoor.value +move_step- gui_circle_y) ** 2/gui_circle_y**2) < 1:
+                    ycoor.value += move_step
+                    last_key = 'w'
+
             elif e.key == okay or e.key == 'Return':
                 print('OK clicked')
                 gui.clear()
