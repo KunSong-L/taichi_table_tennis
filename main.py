@@ -35,7 +35,8 @@ table_tennis = Table_tennis(
     width,
     height,
 )
-table_tennis.init()
+num = 1
+table_tennis.init(num) #num为所需要的球数量，可以选择1或者15，15球就是正常开局
 # GUI
 
 my_gui = ti.GUI("table tennis", res, table_tennis.background_color)
