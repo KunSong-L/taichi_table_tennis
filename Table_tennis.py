@@ -53,7 +53,7 @@ class Table_tennis:  # all ball number = 15+1
         self.game_state = ti.field(ti.i32, shape=1)
         self.game_state[0] = -1  # -1: not end;0:player 1 win; 1:player 2 win
 
-    def init(self):
+    def init(self,num):
         self.score[None] = 0
 
         self.ball.init(self.table.width, self.table.height)
@@ -63,7 +63,11 @@ class Table_tennis:  # all ball number = 15+1
             self.ball.vel[k] = ti.Vector([0.0, 0.0, 0.0])
             self.ball.rot[k] = ti.Vector([0.0, 0.0, 0.0])
             self.ball.angle[k] = ti.Vector([0.1, 0.1, 0.1])  # Gimbal Lock
-            self.roll_in[k] = 0
+            self.roll_in[k] = 1
+
+        self.roll_in[0] = 0
+        for i in range(num):
+            self.roll_in[1+i] = 0
 
     @ti.func
     def collision_balls(self):
@@ -73,7 +77,7 @@ class Table_tennis:  # all ball number = 15+1
                 velA = self.ball.vel[i]
                 rotA = self.ball.rot[i]
                 for j in range(i + 1, 16):
-                    if self.roll_in[i] == 0:
+                    if self.roll_in[j] == 0:
                         posB = self.ball.pos[j]
                         velB = self.ball.vel[j]
                         rotB = self.ball.rot[j]
@@ -383,6 +387,7 @@ class Table_tennis:  # all ball number = 15+1
         self.ball.rot[0] = omega_k * ti.Vector([-hit_point_z, 0, hit_point_x])
         rot_mat = ti.Matrix([[dir[1], -dir[0], 0], [dir[0], dir[1], 0], [0, 0, 1]])
         self.ball.rot[0] = rot_mat @ self.ball.rot[0]
+
 
     def check_static(self) -> ti.f32:
         res = 0.0
