@@ -2,6 +2,11 @@ import numpy as np
 import taichi as ti
 from Table_tennis import *
 from BallPosition import *
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import numpy as np
+
 ti.init(arch=ti.cpu)
 
 
@@ -9,7 +14,7 @@ ti.init(arch=ti.cpu)
 tb_origin_width = 2830
 tb_origin_height = 1550
 reduce_scale = 4
-tennis_origin_radius = 57 / 2
+tennis_origin_radius = 80 / 2
 hole_origin_redius = 150 / 2
 tennis_radius = tennis_origin_radius / reduce_scale
 hole_radius = hole_origin_redius / reduce_scale
@@ -47,6 +52,7 @@ gain_vel = 10.0
 
 hit_point_x = 0.5
 hit_point_z = 0.5
+hit_angle = 0
 
 def check_win():
     res = 1
@@ -56,6 +62,17 @@ def check_win():
             break
     return res
 
+
+table_canvas = ti.Vector.field(3, ti.f32, shape=(tb_origin_height, tb_origin_width))
+
+test_img = mpimg.imread('./fig/1.png')
+
+for i in range(100):
+    for j in range(100):
+        table_canvas[i,j] = test_img[i,j,0:3]
+
+
+my_gui.set_image(table_canvas) 
 
 first_static = 0
 while my_gui.running:
@@ -91,9 +108,10 @@ while my_gui.running:
                 velocity_size -= 1.0 * gain_vel
                 velocity_size = max(0.0, velocity_size)
             elif e.key == 'c': #choose position
-                hit_point_x,hit_point_z = BP() #X:A;  y: b
-                print('hit_point_x = ',hit_point_x)
-                print('hit_point_y=', hit_point_z)
+                hit_point_x,hit_point_z,hit_angle = BP() #X:A;  y: b
+                # print('hit_point_x = ',hit_point_x)
+                # print('hit_point_y=', hit_point_z)
+                # print('hit angle=',hit_angle)
             elif e.key == "1":
                 gain_angle += 10.0
             elif e.key == "2":
@@ -104,7 +122,7 @@ while my_gui.running:
                 gain_vel -= 10.0
             elif e.key == "z":
                 radian = dir_angle * 2 * np.pi / 360
-                table_tennis.hit(velocity_size, np.cos(radian), np.sin(radian), hit_point_x - 0.5, hit_point_z - 0.5)
+                table_tennis.hit(velocity_size, np.cos(radian), np.sin(radian), hit_point_x - 0.5, hit_point_z - 0.5, hit_angle)
                 table_tennis.in_hit = 1
                 table_tennis.first_collision = 0
                 table_tennis.first_hit = 0

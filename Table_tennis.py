@@ -295,6 +295,8 @@ class Table_tennis:  # all ball number = 15+1
             print(self.roll_in[i])
             print(self.ball.vel[i])"""
             if self.roll_in[i] == 0:
+                # print(i)
+                # print(self.ball.rot[i])
                 vel = self.ball.vel[i]
                 rot = self.ball.rot[i]
                 EAngle = self.ball.angle[i]
@@ -359,7 +361,7 @@ class Table_tennis:  # all ball number = 15+1
                         new_rot == ti.Vector([0.0, 0.0, 0.0])
 
                     self.ball.angle[i] = new_angle
-                    if new_vel.norm() < self.friction_coeff_ball_table * delta_t * 5:
+                    if new_vel.norm() < self.friction_coeff_ball_table * delta_t * 0.5:
                         self.ball.vel[i] = ti.Vector([0.0, 0.0, 0.0])
                     else:
                         self.ball.vel[i] = new_vel
@@ -368,7 +370,7 @@ class Table_tennis:  # all ball number = 15+1
                         self.ball.rot[i] = ti.Vector([0.0, 0.0, 0.0])
                     else:
                         self.ball.rot[i] = new_rot
-                    # print("rot=", self.ball.rot[i], "vel=", self.ball.vel[i])
+                    # print("i= ", i, "rot=", self.ball.rot[i], "vel=", self.ball.vel[i])
 
     @ti.kernel
     def update(self, delta_t: ti.f32):
@@ -377,23 +379,25 @@ class Table_tennis:  # all ball number = 15+1
         self.collision_boundary()
 
     def hit(
-        self, velocity: ti.f32, dir_x: ti.f32, dir_y: ti.f32, hit_point_x, hit_point_z
+        self, velocity: ti.f32, dir_x: ti.f32, dir_y: ti.f32, hit_point_x, hit_point_z, hit_angle
     ):
         dir = ti.Vector([dir_x, dir_y, 0.0])
         dir = dir / dir.norm()
-        self.ball.vel[0] = dir * velocity
+        self.ball.vel[0] = dir * velocity * (1 - hit_angle/90)
 
-        omega_k = 5 * velocity / 2 / self.ball.ball_radius
+        omega_k = -5 * velocity / 2 / self.ball.ball_radius
         self.ball.rot[0] = omega_k * ti.Vector([-hit_point_z, 0, hit_point_x])
         rot_mat = ti.Matrix([[dir[1], -dir[0], 0], [dir[0], dir[1], 0], [0, 0, 1]])
         self.ball.rot[0] = rot_mat @ self.ball.rot[0]
+
+        print(self.ball.rot[0])
 
 
     def check_static(self) -> ti.f32:
         res = 0.0
         for i in range(16):
             if self.roll_in[i] == 0:
-                res += self.ball.vel[i].norm()
+                res += self.ball.vel[i].norm() + self.ball.rot[i].norm()
         return res
 
     def display(self, gui, velocity_size, dir_angle):

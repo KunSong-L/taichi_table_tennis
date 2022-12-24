@@ -3,7 +3,7 @@ import taichi as ti
 
 def BP():
     gui_width = 300
-    gui_height = gui_width+100
+    gui_height = gui_width+150
     gui_circle_x = 0.5
     gui_circle_y = gui_width/2/gui_height
     gui = ti.GUI('击球点选择', (gui_width, gui_height))
@@ -11,6 +11,8 @@ def BP():
     xcoor = gui.label('X-coordinates')
     ycoor = gui.label('Y-coordinates')
     okay = gui.button('OK')
+
+    angle = gui.slider("Angle Choose", 0, 90, step=1)
 
     xcoor.value = 0.5
     ycoor.value = gui_circle_y
@@ -70,7 +72,7 @@ def BP():
             elif e.key == okay or e.key == 'Return':
                 print('OK clicked')
                 gui.clear()
-                return xcoor.value, ycoor.value*gui_height/gui_width
+                return xcoor.value, ycoor.value*gui_height/gui_width, angle.value
                 # gui.running = False
         gui.text('abc', (0.5, 0.9), color=0xFFFFFF)
         gui.background_color = 0x3CB310
