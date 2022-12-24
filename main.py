@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
 
+
 ti.init(arch=ti.cpu)
 
 
@@ -39,6 +40,7 @@ table_tennis = Table_tennis(
     tennis_radius,
     width,
     height,
+    res
 )
 num = 1
 table_tennis.init(num) #num为所需要的球数量，可以选择1或者15，15球就是正常开局
@@ -62,17 +64,27 @@ def check_win():
             break
     return res
 
+# 写法1速度慢
+# table_canvas = ti.Vector.field(3, ti.f32, shape=res)
+# bg_color = np.array([0x3C/255,0xB3/255,0x71/255])
+# for i in range(res[0]):
+#     for j in range(res[1]):
+#         table_canvas[i,j] = bg_color
 
-table_canvas = ti.Vector.field(3, ti.f32, shape=(tb_origin_height, tb_origin_width))
+# 初始化桌面，可以在桌面上绘制图形
+# table_canvas = ti.Vector.field(3, ti.f32, shape=res)
 
-test_img = mpimg.imread('./fig/1.png')
+# @ti.kernel
+# def init_canvas():
+#     #桌面
+#     for i in range(res[0]):
+#         for j in range(res[1]):
+#             table_canvas[i,j][0] = 0x3C/255
+#             table_canvas[i,j][1] = 0xB3/255
+#             table_canvas[i,j][2] = 0x71/255
 
-for i in range(100):
-    for j in range(100):
-        table_canvas[i,j] = test_img[i,j,0:3]
-
-
-my_gui.set_image(table_canvas) 
+# init_canvas()
+# my_gui.set_image(table_canvas) 
 
 first_static = 0
 while my_gui.running:
@@ -128,18 +140,8 @@ while my_gui.running:
                 table_tennis.first_hit = 0
                 first_static = 1
 
-        # 做出击球线
-        pos = table_tennis.ball.pos[0]
-        radian = dir_angle * 2 * np.pi / 360
-        dir = ti.Vector([np.cos(radian), np.sin(radian)]) * velocity_size
-        dir.x += pos.x
-        dir.y += pos.y
-        my_gui.line(
-            ti.Vector([pos.x / width, pos.y / height]),
-            ti.Vector([dir.x / width, dir.y / height]),
-            color=table_tennis.line_color[table_tennis.now_player[0]],
-        )
-        table_tennis.display(my_gui, velocity_size, dir_angle)
+        
+        table_tennis.display(my_gui, velocity_size, dir_angle, 1 )
 
     for e in my_gui.get_events(ti.GUI.PRESS):
         if e.key == ti.GUI.ESCAPE:
@@ -148,4 +150,5 @@ while my_gui.running:
             table_tennis.init()
     table_tennis.update(delta_t)
     table_tennis.collision_white_balls()
-    table_tennis.display(my_gui, velocity_size, dir_angle)
+    # table_tennis.draw_ball_in_canvas()
+    table_tennis.display(my_gui, velocity_size, dir_angle, 0)

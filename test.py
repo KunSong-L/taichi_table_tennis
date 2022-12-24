@@ -78,4 +78,6 @@ my_gui.set_image(table_canvas)
 
 for frame in range(10000):
     my_gui.set_image(table_canvas)
+    my_gui.circle(np.array([200, 200]), radius=50, color=0xFFFFFF)
     my_gui.show()
+    

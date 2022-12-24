@@ -4,7 +4,6 @@ from ball import *
 from table import *
 from player import *
 
-
 @ti.data_oriented
 class Table_tennis:  # all ball number = 15+1
     def __init__(
@@ -16,6 +15,7 @@ class Table_tennis:  # all ball number = 15+1
         ball_radius,
         width,
         height,
+        res
     ):
 
         self.ball = ball(ball_radius)
@@ -53,12 +53,15 @@ class Table_tennis:  # all ball number = 15+1
         self.game_state = ti.field(ti.i32, shape=1)
         self.game_state[0] = -1  # -1: not end;0:player 1 win; 1:player 2 win
 
+        self.res = res
+        self.table_canvas = ti.Vector.field(3, ti.f32, shape=res)
+
     def init(self,num):
         self.score[None] = 0
 
         self.ball.init(self.table.width, self.table.height)
         self.table.init()
-
+        self.init_canvas()
         for k in range(16):
             self.ball.vel[k] = ti.Vector([0.0, 0.0, 0.0])
             self.ball.rot[k] = ti.Vector([0.0, 0.0, 0.0])
@@ -68,6 +71,15 @@ class Table_tennis:  # all ball number = 15+1
         self.roll_in[0] = 0
         for i in range(num):
             self.roll_in[1+i] = 0
+
+    @ti.kernel
+    def init_canvas(self):
+        #桌面
+        for i in range(self.res[0]):
+            for j in range(self.res[1]):
+                self.table_canvas[i,j][0] = 0x3C/255
+                self.table_canvas[i,j][1] = 0xB3/255
+                self.table_canvas[i,j][2] = 0x71/255
 
     @ti.func
     def collision_balls(self):
@@ -307,15 +319,15 @@ class Table_tennis:  # all ball number = 15+1
                     self.ball.vel[i] = ti.Vector([0.0, 0.0, 0.0])
                     self.ball.rot[i] = ti.Vector([0.0, 0.0, 0.0])
                 else:
-                    sinphi = ti.sin(EAngle[1])
                     cosphi = ti.cos(EAngle[1])
-                    tantheta = ti.tan(EAngle[0])
-                    costheta = ti.sin(EAngle[0])
+                    tanphi = ti.tan(EAngle[1])
+                    cospsi = ti.cos(EAngle[2])
+                    sinpsi = ti.sin(EAngle[2])
                     m = ti.Matrix(
                         [
-                            [1, sinphi * tantheta, cosphi * tantheta],
-                            [0, cosphi, -sinphi],
-                            [0, sinphi / costheta, cosphi / costheta],
+                            [cospsi / cosphi, sinpsi / cosphi, 0],
+                            [-sinpsi, cospsi, 0],
+                            [cospsi * tanphi, tanphi * sinpsi, 1],
                         ]
                     )
                     rotPal = rot - rot.dot(self.z) * self.z
@@ -390,7 +402,7 @@ class Table_tennis:  # all ball number = 15+1
         rot_mat = ti.Matrix([[dir[1], -dir[0], 0], [dir[0], dir[1], 0], [0, 0, 1]])
         self.ball.rot[0] = rot_mat @ self.ball.rot[0]
 
-        print(self.ball.rot[0])
+        # print(self.ball.rot[0])
 
 
     def check_static(self) -> ti.f32:
@@ -400,10 +412,97 @@ class Table_tennis:  # all ball number = 15+1
                 res += self.ball.vel[i].norm() + self.ball.rot[i].norm()
         return res
 
-    def display(self, gui, velocity_size, dir_angle):
+    @ti.kernel
+    def draw_ball_in_canvas(self):
+        self.draw_ball_pos()
+
+    @ti.func
+    def draw_ball_pos(self):
+        #更新桌面画布
+        for i in range(100):
+            for j in range(100):
+                self.table_canvas[100+i,j][0] = 0
+                self.table_canvas[100+i,j][1] = 0
+                self.table_canvas[100+i,j][2] = 0
+
+
+    def display(self, gui, velocity_size, dir_angle, in_hit):
+
+        angle1 = self.ball.angle[1]
+        sintheta = np.sin(angle1[0])
+        costheta = np.cos(angle1[0])
+        sinphi = np.sin(angle1[1])
+        cosphi = np.cos(angle1[1])
+        sinpsi = np.sin(angle1[2])
+        cospsi = np.cos(angle1[2])
+        R1 = np.array(
+            [
+                [
+                    costheta * cosphi,
+                    sinpsi * sintheta * cosphi - cospsi * sinphi,
+                    cospsi * sintheta * cosphi + sinpsi * sinphi,
+                ],
+                [
+                    costheta * sinphi,
+                    sinpsi * sintheta * sinphi + cospsi * cosphi,
+                    cospsi * sintheta * sinphi - sinpsi * cosphi,
+                ],
+                [-sintheta, sinpsi * costheta, cospsi * costheta],
+            ]
+        )
+
+        x_length = 5
+        Origin2D = np.zeros([2, x_length * 41])  # 球表面像素坐标(-40,40)
+
+        pi = 3.1415926535
+        # 1号球
+        for i in range(x_length):
+            Origin2D[0, i * 41 : (i + 1) * 41] = i - 2
+            Origin2D[1, i * 41 : (i + 1) * 41] = np.linspace(-20, 20, 41)
+
+        theta = (Origin2D[0, :] + 40) / 81 * pi
+        phi = (Origin2D[1, :] + 40) / 81 * pi * 2
+
+        Origin3D = np.zeros([3, x_length * 41])
+
+        r = self.ball.ball_radius
+        Origin3D[0, :] = r * np.sin(theta) * np.cos(phi)
+        Origin3D[1, :] = r * np.sin(theta) * np.sin(phi)
+        Origin3D[2, :] = r * np.cos(theta)
+
+        trans3D = R1 @ Origin3D
+
+        # 做出球上投影
+        # center = self.ball.pos[0]
+        # for i in range(x_length*41):
+        #     if trans3D[2,i] > 0:
+        #         # self.table_canvas[ int(center[0]+ trans3D[0,i]), int(center[1]+trans3D[1,i]) ][0] = 1
+        #         # self.table_canvas[ int(center[0]+ trans3D[0,i]), int(center[1]+trans3D[1,i]) ][1] = 1
+        #         begin = ti.Vector([ int(center[0]+ trans3D[0,i]), int(center[1]+trans3D[1,i])])
+        #         end = begin + 2
+        #         gui.line(begin, end, radius=4,color = 0xFFFFFF)
+
+
+        # gui.set_image(self.table_canvas) 
+
+
         pos_np = self.ball.pos.to_numpy()
         pos_np[:, 0] /= self.table.width
         pos_np[:, 1] /= self.table.height
+
+        # 做出击球线
+        if in_hit:
+            pos = self.ball.pos[0]
+            radian = dir_angle * 2 * np.pi / 360
+            dir = ti.Vector([np.cos(radian), np.sin(radian)]) * velocity_size
+            dir.x += pos.x
+            dir.y += pos.y
+            gui.line(
+                ti.Vector([pos.x / self.table.width, pos.y / self.table.height]),
+                ti.Vector([dir.x / self.table.width, dir.y / self.table.height]),
+                color=self.line_color[self.now_player[0]],
+            )
+
 
         for i in range(0, 16):
             if self.roll_in[i] == 0:
@@ -413,6 +512,16 @@ class Table_tennis:  # all ball number = 15+1
                     color=self.ball.color[i],
                 )
 
+        #利用line实现
+        # BUG in this part
+        center = self.ball.pos[0]
+
+        for i in range(x_length*41):
+            if trans3D[2,i] > 0:
+                begin = ti.Vector([ (center[0]+ trans3D[0,i])/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
+                end = ti.Vector([ (center[0]+ trans3D[0,i]+1)/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
+                gui.line(begin, end, radius=1, color = 0x000000)
+        
         hole_np = self.table.hole_pos.to_numpy()
         hole_np[:, 0] /= self.table.width
         hole_np[:, 1] /= self.table.height
