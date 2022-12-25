@@ -42,7 +42,7 @@ table_tennis = Table_tennis(
     height,
     res
 )
-num = 1
+num = 15
 table_tennis.init(num) #num为所需要的球数量，可以选择1或者15，15球就是正常开局
 # GUI
 

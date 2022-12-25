@@ -55,6 +55,7 @@ class Table_tennis:  # all ball number = 15+1
 
         self.res = res
         self.table_canvas = ti.Vector.field(3, ti.f32, shape=res)
+        self.image_num = 0
 
     def init(self,num):
         self.score[None] = 0
@@ -383,6 +384,7 @@ class Table_tennis:  # all ball number = 15+1
                     else:
                         self.ball.rot[i] = new_rot
                     # print("i= ", i, "rot=", self.ball.rot[i], "vel=", self.ball.vel[i])
+                    # print("i= ", i, "angle=", self.ball.angle[i])
 
     @ti.kernel
     def update(self, delta_t: ti.f32):
@@ -428,7 +430,7 @@ class Table_tennis:  # all ball number = 15+1
 
     def display(self, gui, velocity_size, dir_angle, in_hit):
 
-        angle1 = self.ball.angle[1]
+        angle1 = self.ball.angle[0]
         sintheta = np.sin(angle1[0])
         costheta = np.cos(angle1[0])
         sinphi = np.sin(angle1[1])
@@ -472,18 +474,6 @@ class Table_tennis:  # all ball number = 15+1
 
         trans3D = R1 @ Origin3D
 
-        # 做出球上投影
-        # center = self.ball.pos[0]
-        # for i in range(x_length*41):
-        #     if trans3D[2,i] > 0:
-        #         # self.table_canvas[ int(center[0]+ trans3D[0,i]), int(center[1]+trans3D[1,i]) ][0] = 1
-        #         # self.table_canvas[ int(center[0]+ trans3D[0,i]), int(center[1]+trans3D[1,i]) ][1] = 1
-        #         begin = ti.Vector([ int(center[0]+ trans3D[0,i]), int(center[1]+trans3D[1,i])])
-        #         end = begin + 2
-        #         gui.line(begin, end, radius=4,color = 0xFFFFFF)
-
-
-        # gui.set_image(self.table_canvas) 
 
 
         pos_np = self.ball.pos.to_numpy()
@@ -512,7 +502,7 @@ class Table_tennis:  # all ball number = 15+1
                     color=self.ball.color[i],
                 )
 
-        #利用line实现
+        #利用line实现球面投影
         # BUG in this part
         center = self.ball.pos[0]
 
@@ -543,4 +533,12 @@ class Table_tennis:  # all ball number = 15+1
             color=0xFFAA77,
             font_size=24,
         )
+        #导出图片部分
+
+        image_name = './fig/fullball/'+str(self.image_num)+'.png'
+        self.image_num +=1
+        ti.imwrite(gui.get_image(),image_name)
+
+
         gui.show()
+        
