@@ -5,7 +5,7 @@ from table import *
 from player import *
 
 @ti.data_oriented
-class Table_tennis:  # all ball number = 15+1
+class billiards:  # all ball number = 15+1
     def __init__(
         self,
         friction_coeff_ball_table,
@@ -62,7 +62,6 @@ class Table_tennis:  # all ball number = 15+1
 
         self.ball.init(self.table.width, self.table.height)
         self.table.init()
-        self.init_canvas()
         for k in range(16):
             self.ball.vel[k] = ti.Vector([0.0, 0.0, 0.0])
             self.ball.rot[k] = ti.Vector([0.0, 0.0, 0.0])
@@ -73,26 +72,18 @@ class Table_tennis:  # all ball number = 15+1
         for i in range(num):
             self.roll_in[1+i] = 0
 
-    @ti.kernel
-    def init_canvas(self):
-        #桌面
-        for i in range(self.res[0]):
-            for j in range(self.res[1]):
-                self.table_canvas[i,j][0] = 0x3C/255
-                self.table_canvas[i,j][1] = 0xB3/255
-                self.table_canvas[i,j][2] = 0x71/255
 
     @ti.func
     def collision_balls(self):
         for i in range(16):
             if self.roll_in[i] == 0:
-                posA = self.ball.pos[i]
-                velA = self.ball.vel[i]
+                posA = ti.Vector([self.ball.pos[i][0],self.ball.pos[i][1],self.ball.pos[i][2]])
+                velA = ti.Vector([self.ball.vel[i][0],self.ball.vel[i][1],self.ball.vel[i][2]])
                 rotA = self.ball.rot[i]
                 for j in range(i + 1, 16):
                     if self.roll_in[j] == 0:
-                        posB = self.ball.pos[j]
-                        velB = self.ball.vel[j]
+                        posB = ti.Vector([self.ball.pos[j][0],self.ball.pos[j][1],self.ball.pos[j][2]])
+                        velB = ti.Vector([self.ball.vel[j][0],self.ball.vel[j][1],self.ball.vel[j][2]])
                         rotB = self.ball.rot[j]
                         dir = posA - posB
                         delta_x = dir.norm()
@@ -108,15 +99,17 @@ class Table_tennis:  # all ball number = 15+1
                             deltaVPar = self.friction_coeff_ball_ball * (
                                 deltaV - deltaV.dot(self.z) * self.z
                             )
-
+                            
                             self.ball.vel[i] = (
                                 velB.dot(dir) * dir
                                 + (velA.dot(normaldir) + deltaVPar) * normaldir
                             )
+
                             self.ball.vel[j] = (
                                 velA.dot(dir) * dir
                                 + (velB.dot(normaldir) - deltaVPar) * normaldir
                             )
+
                             deltaRot = (
                                 ti.Vector.cross(deltaV, dir)
                                 * 5
@@ -503,14 +496,13 @@ class Table_tennis:  # all ball number = 15+1
                 )
 
         #利用line实现球面投影
-        # BUG in this part
         center = self.ball.pos[0]
 
-        for i in range(x_length*41):
-            if trans3D[2,i] > 0:
-                begin = ti.Vector([ (center[0]+ trans3D[0,i])/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
-                end = ti.Vector([ (center[0]+ trans3D[0,i]+1)/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
-                gui.line(begin, end, radius=1, color = 0x000000)
+        # for i in range(x_length*41):
+        #     if trans3D[2,i] > 0:
+        #         begin = ti.Vector([ (center[0]+ trans3D[0,i])/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
+        #         end = ti.Vector([ (center[0]+ trans3D[0,i]+1)/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
+        #         gui.line(begin, end, radius=1, color = 0x000000)
         
         hole_np = self.table.hole_pos.to_numpy()
         hole_np[:, 0] /= self.table.width
@@ -535,9 +527,9 @@ class Table_tennis:  # all ball number = 15+1
         )
         #导出图片部分
 
-        image_name = './fig/fullball/'+str(self.image_num)+'.png'
-        self.image_num +=1
-        ti.imwrite(gui.get_image(),image_name)
+        # image_name = './fig/fullball/'+str(self.image_num)+'.png'
+        # self.image_num +=1
+        # ti.imwrite(gui.get_image(),image_name)
 
 
         gui.show()

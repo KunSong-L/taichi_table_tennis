@@ -1,6 +1,6 @@
 import numpy as np
 import taichi as ti
-from Table_tennis import *
+from billiards import *
 from BallPosition import *
 
 import matplotlib.pyplot as plt
@@ -32,7 +32,7 @@ friction_coeff_rotation = tennis_origin_radius * 0.005
 delta_t = 0.1
 
 # control
-table_tennis = Table_tennis(
+table_tennis = billiards(
     friction_coeff_ball_table,
     friction_coeff_ball_ball,
     friction_coeff_rotation,
