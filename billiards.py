@@ -292,7 +292,7 @@ class billiards:  # all ball number = 15+1
     # 这里需要可以手动选择位置
 
     def free_ball(self):  # 自由球
-        self.ball.pos[0] = ti.Vector([0.2 * self.table.width, 0.5 * self.table.height])
+        self.ball.pos[0] = ti.Vector([0.2 * self.table.width, 0.5 * self.table.height, 0.0])
 
     @ti.func
     def update_pos(self, delta_t):
@@ -498,11 +498,11 @@ class billiards:  # all ball number = 15+1
         #利用line实现球面投影
         center = self.ball.pos[0]
 
-        # for i in range(x_length*41):
-        #     if trans3D[2,i] > 0:
-        #         begin = ti.Vector([ (center[0]+ trans3D[0,i])/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
-        #         end = ti.Vector([ (center[0]+ trans3D[0,i]+1)/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
-        #         gui.line(begin, end, radius=1, color = 0x000000)
+        for i in range(x_length*41):
+            if trans3D[2,i] > 0:
+                begin = ti.Vector([ (center[0]+ trans3D[0,i])/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
+                end = ti.Vector([ (center[0]+ trans3D[0,i]+1)/ self.table.width, (center[1]+trans3D[1,i])/ self.table.height])
+                gui.line(begin, end, radius=1, color = 0x000000)
         
         hole_np = self.table.hole_pos.to_numpy()
         hole_np[:, 0] /= self.table.width
