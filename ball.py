@@ -11,7 +11,7 @@ class ball:
         # self.last_pos = ti.Vector.field(3, ti.f32, 16)
         self.pos = ti.Vector.field(3, ti.f32, 16)
         self.vel = ti.Vector.field(3, ti.f32, 16)
-        self.rot = ti.Vector.field(3, ti.f32, 16)
+        self.rot = ti.Vector.field(3, ti.f32, 16) # omega
         self.angle = ti.Vector.field(3, ti.f32, 16)  # Euler angles(ZXZ)
 
         self.color = [
